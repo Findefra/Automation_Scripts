@@ -1,0 +1,38 @@
+import subprocess
+from pathlib import Path
+from datetime import datetime
+
+REPOS = [
+    "https://github.com/yourusername/project-one.git",
+    "https://github.com/yourusername/project-two.git",
+    "https://github.com/yourusername/dotfiles.git",
+]
+
+def backup_repos(repos, backup_dir="~/git_backups"):
+    """Clone or update git repos as bare mirrors."""
+    backup_path = Path(backup_dir).expanduser()
+    backup_path.mkdir(parents=True, exist_ok=True)
+    print(f"Backup started: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+    for repo_url in repos:
+        repo_name = repo_url.split("/")[-1].replace(".git", "")
+        repo_dir = backup_path / f"{repo_name}.git"
+        if repo_dir.exists():
+            # Update existing mirror
+            print(f"  Updating: {repo_name}")
+            result = subprocess.run(
+                ["git", "-C", str(repo_dir), "remote", "update"],
+                capture_output=True, text=True
+            )
+        else:
+            # Clone as bare mirror (all branches, tags, refs)
+            print(f"  Cloning: {repo_name}")
+            result = subprocess.run(
+                ["git", "clone", "--mirror", repo_url, str(repo_dir)],
+                capture_output=True, text=True
+            )
+        if result.returncode == 0:
+            print(f"    Done.")
+        else:
+            print(f"    Failed: {result.stderr.strip()}")
+    print(f"\nBackup complete. Location: {backup_path}")
+backup_repos(REPOS)
