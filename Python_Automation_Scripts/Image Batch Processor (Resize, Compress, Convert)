@@ -1,0 +1,33 @@
+from PIL import Image
+from pathlib import Path
+
+def batch_process_images(input_dir, output_dir, max_width=1200,
+                         quality=85, output_format="WEBP"):
+    """Resize, compress, and convert images in bulk."""
+    in_path = Path(input_dir)
+    out_path = Path(output_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+    supported = {".png", ".jpg", ".jpeg", ".bmp", ".tiff"}
+    processed = 0
+    for img_file in in_path.iterdir():
+        if img_file.suffix.lower() not in supported:
+            continue
+        
+        with Image.open(img_file) as img:
+            # Resize if wider than max_width, keep aspect ratio
+            if img.width > max_width:
+                ratio = max_width / img.width
+                new_size = (max_width, int(img.height * ratio))
+                img = img.resize(new_size, Image.LANCZOS)
+            # Convert RGBA to RGB for formats that don't support alpha
+            if img.mode == "RGBA" and output_format in ("JPEG", "WEBP"):
+                img = img.convert("RGB")
+            ext = ".webp" if output_format == "WEBP" else f".{output_format.lower()}"
+            output_file = out_path / f"{img_file.stem}{ext}"
+            img.save(output_file, format=output_format, quality=quality)
+            processed += 1
+            print(f"  Processed: {img_file.name} -> {output_file.name}")
+    
+    print(f"\nDone. Processed {processed} images.")
+
+batch_process_images("raw_screenshots/", "optimized/", max_width=1000)
