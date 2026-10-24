@@ -1,0 +1,31 @@
+import os
+import re
+from pathlib import Path
+
+def bulk_rename(directory, pattern, replacement, dry_run=True):
+    """Rename files matching a regex pattern."""
+    target_dir = Path(directory)
+    renamed = []
+    
+    for file_path in sorted(target_dir.iterdir()):
+        if file_path.is_file():
+            new_name = re.sub(pattern, replacement, file_path.name)
+            if new_name != file_path.name:
+                new_path = file_path.parent / new_name
+                if dry_run:
+                    print(f"  Would rename: {file_path.name} -> {new_name}")
+                else:
+                    file_path.rename(new_path)
+                    print(f"  Renamed: {file_path.name} -> {new_name}")
+                renamed.append((file_path.name, new_name))
+    
+    print(f"\n{'Would rename' if dry_run else 'Renamed'} {len(renamed)} files.")
+    return renamed
+
+# Example: Strip "Screenshot " prefix and reformat dates
+bulk_rename(
+    directory="~/Desktop/screenshots",
+    pattern=r"Screenshot (\d{4})-(\d{2})-(\d{2}) at .+\.png",
+    replacement=r"\1\2\3_capture.png",
+    dry_run=True  # Set to False when you're confident
+)
