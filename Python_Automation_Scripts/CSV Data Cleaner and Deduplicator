@@ -1,0 +1,33 @@
+import pandas as pd
+from pathlib import Path
+
+def clean_csv(input_file, output_file=None):
+    """Clean, deduplicate, and standardize a CSV file."""
+    df = pd.read_csv(input_file)
+    original_rows = len(df)
+    print(f"  Original: {original_rows} rows, {len(df.columns)} columns")
+    
+    # Strip whitespace from string columns
+    for col in df.select_dtypes(include=["object"]).columns:
+        df[col] = df[col].str.strip()
+    
+    # Drop fully empty rows
+    df.dropna(how="all", inplace=True)
+    
+    # Remove exact duplicate rows
+    dupes = df.duplicated().sum()
+    df.drop_duplicates(inplace=True)
+    
+    # Standardize column names: lowercase, replace spaces with underscores
+    df.columns = [col.strip().lower().replace(" ", "_") for col in df.columns]
+    
+    # Fill missing values in numeric columns with 0
+    for col in df.select_dtypes(include=["number"]).columns:
+        df[col].fillna(0, inplace=True)
+    output = output_file or input_file.replace(".csv", "_cleaned.csv")
+    df.to_csv(output, index=False)
+    print(f"  Removed {dupes} duplicates")
+    print(f"  Final: {len(df)} rows -> {output}")
+    return df
+
+clean_csv("messy_client_data.csv")
