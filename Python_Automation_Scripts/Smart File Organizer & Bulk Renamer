@@ -1,0 +1,37 @@
+import re
+from pathlib import Path
+
+def smart_organizer(directory_path, pattern=r"^Screenshot.*", dry_run=True):
+    """
+    Scans a directory, safely previews or renames files matching a pattern,
+    and sorts them logically by file type extensions.
+    """
+    target_dir = Path(directory_path).expanduser()
+    if not target_dir.exists():
+        print(f"Directory {target_dir} does not exist.")
+        return
+
+    print(f"--- Running Execution (Dry Run = {dry_run}) ---")
+    for file_path in target_dir.iterdir():
+        if file_path.is_file():
+            # Check pattern matching rule
+            if re.match(pattern, file_path.name):
+                new_name = file_path.name.lower().replace(" ", "_")
+                new_path = file_path.parent / new_name
+                
+                if dry_run:
+                    print(f"[MATCH] Would rename: {file_path.name} -> {new_name}")
+                else:
+                    file_path.rename(new_path)
+                    print(f"[RENAME] Completed: {file_path.name} -> {new_name}")
+
+            # General sorting by extension type
+            ext = file_path.suffix.lower().strip(".")
+            if ext:
+                dest_folder = target_dir / ext
+                if not dry_run:
+                    dest_folder.mkdir(exist_ok=True)
+                    file_path.move(dest_folder / file_path.name)
+
+# Toggle dry_run=False only after validating console printouts
+smart_organizer("~/Downloads", pattern=r"^Document_.*", dry_run=True)
