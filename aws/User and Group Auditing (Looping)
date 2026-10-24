@@ -1,0 +1,13 @@
+#!/bin/bash
+# List all IAM users and evaluate if they belong to a group
+
+users=$(aws iam list-users | jq -r '.Users[].UserName')
+
+for user in $users; do
+    groups=$(aws iam list-groups-for-user --user-name "$user" | jq -r '.Groups[].GroupName')
+    if [ -z "$groups" ]; then
+        echo "⚠️ WARNING: User '$user' does not belong to any IAM Group."
+    else
+        echo "User '$user' belongs to: $groups"
+    fi
+done
