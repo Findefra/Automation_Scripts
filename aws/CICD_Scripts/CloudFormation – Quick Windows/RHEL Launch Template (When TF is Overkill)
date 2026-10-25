@@ -1,0 +1,70 @@
+# file: ci-ml-launch-template.yaml
+# Use when you need a fast, native launch template for Auto Scaling CI agents or SageMaker-style ML endpoints.
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Windows and RHEL Launch Templates for CI/CD + ML
+
+Parameters:
+  LatestWindowsAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
+  LatestRhelAmiId:
+    Type: String
+    Description: RHEL 9 AMI ID (or use SSM parameter if available)
+
+Resources:
+  WindowsLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: windows-ci-ml-lt
+      LaunchTemplateData:
+        ImageId: !Ref LatestWindowsAmiId
+        InstanceType: m6i.xlarge
+        IamInstanceProfile:
+          Name: EC2-Windows-CI-ML-Role
+        MetadataOptions:
+          HttpTokens: required
+          HttpPutResponseHopLimit: 2
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: 100
+              VolumeType: gp3
+              Encrypted: true
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Role
+                Value: CI-CD-ML
+              - Key: OS
+                Value: Windows
+
+  RhelLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: rhel-ci-ml-lt
+      LaunchTemplateData:
+        ImageId: !Ref LatestRhelAmiId
+        InstanceType: m6i.xlarge
+        IamInstanceProfile:
+          Name: EC2-RHEL-CI-ML-Role
+        MetadataOptions:
+          HttpTokens: required
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: 80
+              VolumeType: gp3
+              Encrypted: true
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: Role
+                Value: CI-CD-ML
+              - Key: OS
+                Value: RHEL
+
+Outputs:
+  WindowsLaunchTemplateId:
+    Value: !Ref WindowsLaunchTemplate
+  RhelLaunchTemplateId:
+    Value: !Ref RhelLaunchTemplate
