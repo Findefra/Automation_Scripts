@@ -1,5 +1,7 @@
 # Automation_Scripts
 
+![Validate Scripts](https://github.com/Findefra/Automation_Scripts/actions/workflows/validate-scripts.yml/badge.svg)
+
 A collection of Bash, Python, and PowerShell automation scripts for AWS, RHEL
 servers, Windows workstations, and general productivity.
 
