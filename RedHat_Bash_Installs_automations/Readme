@@ -1,1 +1,19 @@
-These are for the useof red hat servers in production
+These are for the use of red hat servers in production
+
+The tool picks are good; the execution has five real problems:
+
+set -e + || true everywhere — errors armed then disarmed per line; dua-cli and kondo (Rust crates, not in EPEL) fail silently and the script still declares victory.
+
+sudo dnf update -y — a tools script that upgrades the kernel is a surprise no admin wants; full OS updates belong behind an explicit --update flag.
+
+CRB enabled after EPEL install — backwards; EPEL's build deps live in CRB.
+
+alias du='dust' / alias top='htop' system-wide — the worst offender. Aliases don't expand in scripts, cron, or under sudo, so the same command behaves differently by context. Pastes from docs must behave as documented; shadowing real binaries makes your machine untrustworthy for debugging.
+
+atop installed but its logger never enabled — the entire reason to run atop on a server is replaying history from /var/log/atop; v1 buys the dashcam and never turns it on. BleachBit, meanwhile, is a desktop tool — server reclaim is dnf autoremove, journal vacuum, and container prunes, which v2 ships as a server-clean helper.
+
+What v2 changes
+Opt-in --update flag, CRB-before-EPEL ordering, per-package install with cargo fallback and an honest end-of-run verification report, atop/sysstat services actually enabled, additive-only aliases (disk, big, mon, hist), a root check with OS detection, and the server-safe cleanup helper.
+
+Best tool upgrades for your money
+fzf (biggest single quality-of-life win), sysstat with the service on (sar data is what Red Hat support asks for first), duf + gdu, ripgrep/fd/bat/eza, broot, plocate, and keep kondo for dev boxes via cargo. One strategic note: keep EPEL minimal on production RHEL — Red Hat support doesn't cover EPEL packages, and STIG/FedRAMP audits flag them.
