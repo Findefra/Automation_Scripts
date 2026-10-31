@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+#
+# Installer for the once-per-24h RHEL login system report.
+# Writes /usr/local/bin/login-system-report.sh and makes it executable.
+#
+set -euo pipefail
+
 sudo tee /usr/local/bin/login-system-report.sh > /dev/null << 'EOF'
 #!/bin/bash
 # ================================================
