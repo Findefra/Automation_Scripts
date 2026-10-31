@@ -1,7 +1,19 @@
-import pyperclip
+#!/usr/bin/env python3
+"""Clipboard History Manager.
+
+Monitor the clipboard and log new entries with timestamps to a file.
+Press Ctrl+C to stop.
+
+Usage:
+    python clipboard_history_manager.py --log-file clipboard_log.txt
+"""
+import argparse
 import time
 from datetime import datetime
 from pathlib import Path
+
+import pyperclip
+
 
 def run_clipboard_history(log_file="clipboard_log.txt", poll_interval=1.0):
     """Monitor clipboard and log new entries with timestamps."""
@@ -26,4 +38,17 @@ def run_clipboard_history(log_file="clipboard_log.txt", poll_interval=1.0):
     except KeyboardInterrupt:
         print(f"\nStopped. Logged {entry_count} entries to {log_path}")
 
-run_clipboard_history()
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--log-file", default="clipboard_log.txt",
+                        help="Log file path (default: clipboard_log.txt)")
+    parser.add_argument("--interval", type=float, default=1.0,
+                        help="Poll interval in seconds (default: 1.0)")
+    args = parser.parse_args()
+
+    run_clipboard_history(log_file=args.log_file, poll_interval=args.interval)
+
+
+if __name__ == "__main__":
+    main()

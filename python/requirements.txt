@@ -1,0 +1,6 @@
+# Dependencies for the Python automation scripts
+pandas
+Pillow
+pyperclip
+PyPDF2
+requests

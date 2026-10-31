@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 # List all IAM users and evaluate if they belong to a group
 
 users=$(aws iam list-users | jq -r '.Users[].UserName')

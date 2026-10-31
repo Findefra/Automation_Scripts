@@ -1,4 +1,7 @@
-These are for the use of red hat servers in production
+# RedHat Bash Install Automations
+
+These are for the use of Red Hat servers in production.
+
 
 The tool picks are good; the execution has five real problems:
 

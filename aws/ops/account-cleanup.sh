@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 # AWS Account Cleanup Script - Use at your own risk!
 # Set your profile if needed: export AWS_PROFILE=yourprofile
 
