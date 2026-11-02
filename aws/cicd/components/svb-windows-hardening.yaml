@@ -98,7 +98,7 @@ phases:
         inputs:
           commands:
             - |
-              $profiles = Get Get-NetFirewallProfile
+              $profiles = Get-NetFirewallProfile
               foreach ($p in $profiles) {
                 if (-not $p.Enabled) {
                   Write-Warning "Firewall profile $($p.Name) is disabled"
