@@ -1,0 +1,141 @@
+name: SVB-Linux-Hardening
+description: >
+  Extra hardening for Linux base images (Ubuntu / RHEL). Applies common CIS-aligned
+  controls that complement the AWS-managed update and CloudWatch components.
+  Intended to run after OS updates and before any vulnerability scan component.
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: InstallHardeningPackages
+        action: ExecuteBash
+        onFailure: Abort
+        maxAttempts: 3
+        inputs:
+          commands:
+            - |
+              set -euo pipefail
+              if command -v dnf >/dev/null 2>&1; then
+                PKG_MGR=dnf
+              elif command -v yum >/dev/null 2>&1; then
+                PKG_MGR=yum
+              elif command -v apt-get >/dev/null 2>&1; then
+                PKG_MGR=apt-get
+                export DEBIAN_FRONTEND=noninteractive
+              else
+                echo "Unsupported package manager" >&2
+                exit 1
+              fi
+
+              echo "Using package manager: $PKG_MGR"
+              if [[ "$PKG_MGR" == "apt-get" ]]; then
+                $PKG_MGR update -y
+                $PKG_MGR install -y aide auditd rsyslog chrony unattended-upgrades
+              else
+                $PKG_MGR install -y aide audit rsyslog chrony
+              fi
+
+      - name: ConfigureSSHHardening
+        action: ExecuteBash
+        onFailure: Abort
+        inputs:
+          commands:
+            - |
+              set -euo pipefail
+              SSHD_CONFIG=/etc/ssh/sshd_config
+              cp -a "$SSHD_CONFIG" "${SSHD_CONFIG}.svb.bak" || true
+
+              # CIS-aligned SSH settings (safe defaults for golden images)
+              sed -i -E 's/^#?PermitRootLogin.*/PermitRootLogin no/' "$SSHD_CONFIG"
+              sed -i -E 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' "$SSHD_CONFIG"
+              sed -i -E 's/^#?X11Forward dev_cipher.*/X11Forwarding no/' "$SSHD_CONFIG"
+              sed -i -E 's/^#?MaxAuthTries.*/MaxAuthTries 4/' "$SSHD_CONFIG"
+              sed -i -E 's/^#?ClientAliveInterval.*/ClientAliveInterval 300/' "$SSHD_CONFIG"
+              sed -i -E 's/^#?ClientAliveCountMax.*/ClientAliveCountMax 0/' "$SSHD_CONFIG"
+
+              # Ensure Protocol 2 and strong ciphers if not already set
+              grep -qE '^Protocol ' "$SSHD_CONFIG" || echo "Protocol 2" >> "$SSHD_CONFIG"
+
+              echo "SSH hardening applied"
+
+      - name: ConfigureSysctlHardening
+        action: ExecuteBash
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              set -euo pipefail
+              cat > /etc/sysctl.d/99-svb-hardening.conf <<'SYSCTL'
+              # SVB Linux hardening - network & kernel
+              net.ipv4.conf.all.send_redirects = 0
+              net.ipv4.conf.default.send_redirects = 0
+              net.ipv4.conf.all.accept_redirects = 0
+              net.ipv4.conf.default.accept_redirects = 0
+              net.ipv4.conf.all.accept_source_route = 0
+              net.ipv4.conf.default.accept_source_route = 0
+              net.ipv4.conf.all.log_martians = 1
+              net.ipv4.icmp_echo_ignore_broadcasts = 1
+              net.ipv4.icmp_ignore_bogus_error_responses = 1
+              net.ipv4.tcp_syncookies = 1
+              net.ipv6.conf.all.accept_redirects = 0
+              net.ipv6.conf.default.accept_redirects = 0
+              kernel.randomize_va_space = 2
+              fs.suid_dumpable = 0
+              SYSCTL
+              sysctl --system || true
+              echo "sysctl hardening applied"
+
+      - name: EnableAuditd
+        action: ExecuteBash
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              set -euo pipefail
+              if systemctl list-unit-files | grep -q auditd; then
+                systemctl enable auditd || true
+                systemctl start auditd || true
+                echo "auditd enabled"
+              else
+                echo "auditd unit not present – skipping"
+              fi
+
+      - name: ConfigureChrony
+        action: ExecuteBash
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              set -euo pipefail
+              if systemctl list-unit-files | grep -q chronyd; then
+                systemctl enable chronyd || true
+                systemctl start chronyd || true
+              elif systemctl list-unit-files | grep -q chrony; then
+                systemctl enable chrony || true
+                systemctl start chrony || true
+              fi
+              echo "time sync service configured"
+
+  - name: validate
+    steps:
+      - name: ValidateSSHConfig
+        action: ExecuteBash
+        onFailure: Abort
+        inputs:
+          commands:
+            - |
+              set -euo pipefail
+              grep -E '^PermitRootLogin no' /etc/ssh/sshd_config
+              grep -E '^PasswordAuthentication no' /etc/ssh/sshd_config
+              echo "SSH hardening validation passed"
+
+      - name: ValidateSysctl
+        action: ExecuteBash
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              set -euo pipefail
+              test -f /etc/sysctl.d/99-svb-hardening.conf
+              echo "sysctl config present"

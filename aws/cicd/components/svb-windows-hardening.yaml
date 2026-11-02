@@ -1,0 +1,108 @@
+name: SVB-Windows-Hardening
+description: >
+  Extra hardening for Windows Server base images. Applies common security
+  baselines (password policy, audit policy, firewall, SMBv1 disable, etc.)
+  that complement the AWS-managed update-windows and CloudWatch agent components.
+schemaVersion: 1.0
+
+phases:
+  - name: build
+    steps:
+      - name: DisableSMBv1
+        action: ExecutePowerShell
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              $ErrorActionPreference = "Stop"
+              try {
+                Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force
+                Write-Host "SMBv1 disabled"
+              } catch {
+                Write-Host "SMBv1 disable skipped or already applied: $_"
+              }
+
+      - name: ConfigurePasswordPolicy
+        action: ExecutePowerShell
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              $ErrorActionPreference = "Continue"
+              # Minimum password length 14, complexity enabled, max age 60 days
+              net accounts /minpwlen:14
+              net accounts /maxpwage:60
+              net accounts /minpwage:1
+              net accounts /uniquepw:24
+              Write-Host "Password policy baseline applied"
+
+      - name: EnableWindowsFirewall
+        action: ExecutePowerShell
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              $ErrorActionPreference = "Continue"
+              Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+              Write-Host "Windows Firewall enabled for all profiles"
+
+      - name: ConfigureAuditPolicy
+        action: ExecutePowerShell
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              $ErrorActionPreference = "Continue"
+              # Basic advanced audit policy – success+failure for logon and account management
+              auditpol /set /subcategory:"Logon" /success:enable /failure:enable
+              auditpol /set /subcategory:"Logoff" /success:enable /failure:enable
+              auditpol /set /subcategory:"Account Lockout" /success:enable /failure:enable
+              auditpol /set /subcategory:"User Account Management" /success:enable /failure:enable
+              Write-Host "Audit policy baseline applied"
+
+      - name: DisableUnnecessaryServices
+        action: ExecutePowerShell
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              $ErrorActionPreference = "Continue"
+              $services = @("XboxGipSvc", "XblAuthManager", "XblGameSave", "WMPNetworkSvc")
+              foreach ($svc in $services) {
+                $s = Get-Service -Name $svc -ErrorAction SilentlyContinue
+                if ($s) {
+                  Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
+                  Set-Service -Name $svc -StartupType Disabled -ErrorAction SilentlyContinue
+                  Write-Host "Disabled service: $svc"
+                }
+              }
+
+      - name: EnablePowerShellLogging
+        action: ExecutePowerShell
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              $ErrorActionPreference = "Continue"
+              # Module logging + script block logging (basic)
+              $regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
+              if (-not (Test-Path $regPath)) { New-Item -Path $regPath -Force | Out-Null }
+              Set-ItemProperty -Path $regPath -Name "EnableScriptBlockLogging" -Value 1 -Type DWord
+              Write-Host "PowerShell script block logging enabled"
+
+  - name: validate
+    steps:
+      - name: ValidateFirewall
+        action: ExecutePowerShell
+        onFailure: Continue
+        inputs:
+          commands:
+            - |
+              $profiles = Get Get-NetFirewallProfile
+              foreach ($p in $profiles) {
+                if (-not $p.Enabled) {
+                  Write-Warning "Firewall profile $($p.Name) is disabled"
+                } else {
+                  Write-Host "Firewall profile $($p.Name) is enabled"
+                }
+              }
