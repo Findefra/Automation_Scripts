@@ -49,7 +49,7 @@ phases:
               # CIS-aligned SSH settings (safe defaults for golden images)
               sed -i -E 's/^#?PermitRootLogin.*/PermitRootLogin no/' "$SSHD_CONFIG"
               sed -i -E 's/^#?PasswordAuthentication.*/PasswordAuthentication no/' "$SSHD_CONFIG"
-              sed -i -E 's/^#?X11Forward dev_cipher.*/X11Forwarding no/' "$SSHD_CONFIG"
+              sed -i -E 's/^#?X11Forwarding.*/X11Forwarding no/' "$SSHD_CONFIG"
               sed -i -E 's/^#?MaxAuthTries.*/MaxAuthTries 4/' "$SSHD_CONFIG"
               sed -i -E 's/^#?ClientAliveInterval.*/ClientAliveInterval 300/' "$SSHD_CONFIG"
               sed -i -E 's/^#?ClientAliveCountMax.*/ClientAliveCountMax 0/' "$SSHD_CONFIG"
