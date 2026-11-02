@@ -22,7 +22,7 @@ COMPONENT_PREFIX="${COMPONENT_PREFIX:-svb/components}"
 SEMANTIC_VERSION="${SEMANTIC_VERSION:-1.0.0}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMPONENTS_DIR="$(cd "${SCRIPT_DIR}/../components" && pwd)"
+COMPONENTS_DIR="${SCRIPT_DIR}/components"
 
 log()  { echo -e "[\033[0;32mINFO\033[0m]  $*"; }
 die()  { echo -e "[\033[0;31mERROR\033[0m] $*" >&2; exit 1; }
