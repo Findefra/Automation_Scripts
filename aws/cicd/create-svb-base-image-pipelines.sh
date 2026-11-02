@@ -7,7 +7,7 @@
 #   - Red Hat Enterprise Linux (RHEL)
 #
 # Naming convention : SVB_BaseImagePipeline_<OS>
-# Default region    : us-west-2 (override with AWS_REGION)
+# Default region    : us-east-1 (override with AWS_REGION)
 # Schedule          : Biweekly (1st & 3rd Sunday) with dependency-update gate
 #
 # Prerequisites:
@@ -29,7 +29,7 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 # Configuration (override via environment)
 # -----------------------------------------------------------------------------
-REGION="${AWS_REGION:-us-west-2}"
+REGION="${AWS_REGION:-us-east-1}"
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 INSTANCE_PROFILE_NAME="${INSTANCE_PROFILE_NAME:-EC2InstanceProfileForImageBuilder}"
 INFRA_CONFIG_NAME="${INFRA_CONFIG_NAME:-SVB-ImageBuilder-InfraConfig}"

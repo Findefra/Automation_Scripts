@@ -9,13 +9,13 @@
 #   - Permissions: s3:PutObject, imagebuilder:CreateComponent
 #
 # Usage:
-#   export COMPONENT_BUCKET=my-imagebuilder-components-us-west-2
+#   export COMPONENT_BUCKET=my-imagebuilder-components-us-east-1
 #   ./publish-svb-components.sh
 # =============================================================================
 
 set -euo pipefail
 
-REGION="${AWS_REGION:-us-west-2}"
+REGION="${AWS_REGION:-us-east-1}"
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 COMPONENT_BUCKET="${COMPONENT_BUCKET:?Set COMPONENT_BUCKET to an S3 bucket name}"
 COMPONENT_PREFIX="${COMPONENT_PREFIX:-svb/components}"

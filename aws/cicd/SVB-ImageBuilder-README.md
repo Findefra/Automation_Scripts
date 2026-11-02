@@ -20,7 +20,7 @@ aws/cicd/
 ### 1. Publish custom components (optional but recommended)
 
 ```bash
-export AWS_REGION=us-west-2
+export AWS_REGION=us-east-1
 export COMPONENT_BUCKET=your-imagebuilder-components-bucket
 
 chmod +x publish-svb-components.sh
@@ -31,7 +31,7 @@ chmod +x publish-svb-components.sh
 ### 2. Create the three pipelines
 
 ```bash
-export AWS_REGION=us-west-2
+export AWS_REGION=us-east-1
 export INSTANCE_PROFILE_NAME=EC2InstanceProfileForImageBuilder   # or your profile
 
 # Optional – attach custom components
@@ -80,12 +80,12 @@ These are complementary to AWS-managed components and (where subscribed) CIS Mar
 
 ```bash
 aws imagebuilder start-image-pipeline-execution \
-  --region us-west-2 \
-  --image-pipeline-arn arn:aws:imagebuilder:us-west-2:ACCOUNT:image-pipeline/SVB_BaseImagePipeline_Ubuntu
+  --region us-east-1 \
+  --image-pipeline-arn arn:aws:imagebuilder:us-east-1:ACCOUNT:image-pipeline/SVB_BaseImagePipeline_Ubuntu
 ```
 
 ## Notes
 
 - Keep base recipes lean. Heavy ML / CUDA stacks belong in a second-stage recipe that starts from these golden images.
 - For CIS Benchmark Level 1, subscribe to the CIS Marketplace components and add their ARNs to the recipe (they run last automatically).
-- Region default is `us-west-2` to match existing SVB pipelines; override with `AWS_REGION`.
+- Region default is `us-east-1`; override with `AWS_REGION` if needed.
