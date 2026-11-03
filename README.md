@@ -1,3 +1,12 @@
+> **Migration notice**  
+> This repository is being consolidated into the new Citadel monorepos:  
+> - **Public** → [External-Citadel](https://github.com/Findefra/External-Citadel)  
+> - **Private / production** → [Internal-Citadel](https://github.com/Findefra/Internal-Citadel)  
+>  
+> New work and ongoing migration of scripts, IaC, and AI modules should target those repositories. This repo remains available for reference during the transition.
+
+---
+
 # Automation_Scripts
 
 ![Validate Scripts](https://github.com/Findefra/Automation_Scripts/actions/workflows/validate-scripts.yml/badge.svg)
